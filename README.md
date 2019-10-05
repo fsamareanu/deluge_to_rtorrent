@@ -35,13 +35,16 @@ How to use:
 1. Configure rtorrent and make sure the user running the script has read/write access to rtorrent's scgi_sock
 2. Configure pyrocore
 3. Have deluge accessible over TCP/IP
-4. Get the scripts and configure settings
-git clone https://github.com/fsamareanu/deluge_to_rtorrent 
-cd deluge_to_rtorrent
-cp conf/settings.sh.dist conf/settings.sh
-Edit settings.sh to match your environment
-5. Configure Execute plugin in deluge and restart both deluge web and deluge daemon
+4. Get the scripts and configure settings  
+git clone https://github.com/fsamareanu/deluge_to_rtorrent  
+cd deluge_to_rtorrent  
+cp conf/settings.sh.dist conf/settings.sh  
+Edit settings.sh to match your environment  
+5. Configure Execute plugin in deluge and restart both deluge web and deluge daemon  
 
 If the script has any issues run it from command line and provide the screen output + the log mentioned at the top
 
-Pull requests are welcome. So is _constructive_ criticism.
+Pull requests are welcome. So is _constructive_ criticism.  
+Initial version of the script came from here: https://github.com/wseedbox/deluge-to-rtorrent . Kudos to them.
+
+Since the variable where we store the deluge ratio is the same as the rutorrent plugin uses, you can use https://github.com/wseedbox/rutorrent-deluge-ratio to display both the deluge ratio and the total ratio.

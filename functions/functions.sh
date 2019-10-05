@@ -3,7 +3,7 @@
 if [ "${BASH_SOURCE[0]}" -ef "$0" ]
 then
     echo "Hey, you should source this script, not execute it!"
-    exit 10
+    return 10
 fi
 
 #Error handling here
@@ -11,7 +11,67 @@ set -e
 #Define a "trap" function that prettifies and shows any possible typos
 err() {
 	echo "An error has occured at $LINENO:"
-	awk 'NR>L-4 && NR<L+4 { printf "%-5d%7s%s\n",NR,(NR==L?"HERE>>>":""),$0 }' L="$1" "$0"
+	awk 'NR>L-2 && NR<L+2 { printf "%-5d%7s%s\n",NR,(NR==L?"HERE>>>":""),$0 }' L="$1" "$0"
+}
+
+check_config_variables() {
+always_mandatory_array=(
+home
+bindir
+chtor_bin
+dc_local_bin
+dc_local_host
+dc_local_username
+dc_local_password
+dc_remote_enable
+deluge_state_dir
+enable_external_command_timeout
+label_not_found_string
+logdir
+num_torrents_queue_max
+r_step_sleep
+step_sleep
+rtxmlrpc_bin
+rtxmlrpc_socket
+min_ratio_move_local
+run_count
+run_count_max
+repair_run_count
+repair_run_count_max
+torrentid
+)
+
+when_remote_enabled_mandatory_array=(
+dc_remote_bin
+dc_remote_host
+dc_remote_username
+dc_remote_password
+min_ratio_move_remote
+)
+
+not_mandatory_array=(
+torrentname_in
+torrentpath_in
+)
+
+for i in "${always_mandatory_array[@]}";
+        do
+                check_null_parameter "$i";
+        done
+
+if [[ "$dc_remote_enable" = "1" ]]; then
+        for j in "${when_remote_enabled_mandatory_array[@]}";
+                do
+                        check_null_parameter "$j";
+                done
+fi
+
+validate_file_folder "$home"
+validate_file_folder "$bindir"
+validate_file_folder "$chtor_bin"
+validate_file_folder "$dc_local_bin"
+validate_file_folder "$deluge_state_dir"
+validate_file_folder "$rtxmlrpc_bin"
 }
 
 #Create a sleep function to use further
@@ -31,7 +91,7 @@ check_remote_enabled() {
 		dc_remote_bin=$dc_local_bin
 		dc_remote_host=$dc_local_host
 		dc_remote_username=$dc_local_username
-		dc_remote_pass=$dc_local_password
+		dc_remote_password=$dc_local_password
 	else
 		echo "Remote operations enabled"
 	fi
@@ -43,7 +103,7 @@ check_timeout_enabled() {
 	substitute_if_null "$external_command_timeout" 60
 	external_command_timeout="$substvar"
 	if [[ ("${enable_external_command_timeout}" = "1") ]];then
-		echo "Command timeout enabled (experimental)"
+		echo "Command timeout enabled"
 		dc_local_bin="timeout --signal=KILL $external_command_timeout ${dc_local_bin}"
 		dc_remote_bin="timeout --signal=KILL $external_command_timeout ${dc_remote_bin}"
 		rtxmlrpc_bin="timeout --signal=KILL $external_command_timeout ${rtxmlrpc_bin}"
@@ -66,14 +126,15 @@ get_deluge_version() {
 
 #Check input parameters are correct#
 check_null_parameter() {
-	if [ -z "$1" ];then
-		echo "It's null, exiting"
-		exit 10
-	else
-		echo "It's not null"
+#	echo "Checking if $1 is null"
+        if [ -z "${!1}" ];then
+                echo "Variable $1 is null, exiting"
+                return 10
+        else
+#                echo "It's not null"
 		true
-	fi
-	}
+        fi
+}
 
 #Define a helper function to subtitute a value with another if first argument is null
 substitute_if_null() {
@@ -87,11 +148,11 @@ substitute_if_null() {
 
 #Do a sanity check on the input, make sure only alphanumeric input was provided#
 check_torrentid_correct() {
-	if [[ "$1" =~ [^a-zA-Z0-9] ]];then
+	if [[ "$torrentid" =~ [^a-zA-Z0-9] ]];then
 		echo "Torrent id ${1} contains invalid characters. Make sure torrent ID only contains letters and numbers."
-		exit 10
+		return 10
 	else
-		echo "It doesn't"
+		true
 	fi
 }
 
@@ -102,7 +163,7 @@ check_url() {
 		true
 	else
 		echo "$1" is invalid. Enter a valid URL or leave blank.
-		exit 10
+		return 10
 	fi
 }
 
@@ -111,13 +172,16 @@ get_torrent_name() {
 	torrentname=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid"| grep "^Name: " | awk -F':[[:blank:]]*' '{print $2}')
 	substitute_if_null "$torrentname" "$torrentname_in"
 	torrentname="$substvar"
+	check_null_parameter torrentname
 }
 
 #Retrieve torrent path and make sure it is not blank#
 get_torrent_path() {
-	torrentpath=$(realpath -s "$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid"| grep "^Download Folder: " | awk -F':[[:blank:]]*' '{print $2}')")
+	torrentpath="$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid"| grep "^Download Folder: " | awk -F':[[:blank:]]*' '{print $2}')"
 	substitute_if_null "$torrentpath" "$torrentpath_in"
 	torrentpath="$substvar"
+	check_null_parameter torrentpath
+	validate_file_folder "$torrentpath/$torrentname"
 }
 
 #Check if file or folder exists#
@@ -128,26 +192,58 @@ validate_file_folder() {
 		true
 	else
 		echo "File or folder $1 doesn't exist, bailing out"
-		exit 10
+		return 10
 	fi
 }
 
-#Define a function to stop a command from hanging after a specific time interval since something is probably broken
-run_cmd_with_timeout() {
-	true
+#Generate random string for further use
+generate_random() {
+	unset randomstring
+	randomstring=$(tr -dc A-Za-z0-9 < /dev/urandom | dd bs=20 count=1 2>/dev/null)
 }
 
 #Define function to calculate different ratios that are used further in the script#
 calculate_ratio() {
+	echo "Calculating ratio"
 	localratio_raw=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
-	remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_pass; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
+	check_null_parameter localratio_raw
+	remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
 	substitute_if_null "$remoteratio_raw" 0
 	remoteratio_raw=$substvar
 	localratio=$(echo "$localratio_raw" | awk '{print int($0)}')
 	remoteratio=$(echo "$remoteratio_raw" | awk '{print int($0)}')
 	averageratio_raw=$(echo "$localratio_raw" "$remoteratio_raw" | awk '{ for(i=1; i<=NF;i++) j+=$i; print j / 2; j=0 }')
+	if [[ ("$dc_remote_enable" == "1") ]];then
+		sumratio_raw=$(echo "$localratio_raw" "$remoteratio_raw" | awk '{ for(i=1; i<=NF;i++) j+=$i; print j ; j=0 }')
+	else
+		sumratio_raw=$(echo "$localratio_raw" "$remoteratio_raw" | awk '{ for(i=1; i<=NF;i++) j+=$i; print j /2; j=0 }')
+	fi
+	echo "Done"
 }
 
+deluge_ratio_to_send() {
+	per_tracker_deluge_ratio=$(grep "^$configured_tracker_url_prefix"_deluge_ratio= "$confdir"/settings.sh|grep -v "#"|awk -F"=" '{print $2}')
+	substitute_if_null "$per_tracker_deluge_ratio" localratio
+	per_tracker_deluge_ratio=$substvar
+	case "$per_tracker_deluge_ratio" in
+		localratio)
+			deluge_ratio="$localratio_raw"
+			;;
+		remoteratio)
+			deluge_ratio="$remoteratio_raw"
+			;;
+		avgratio)
+			deluge_ratio="$averageratio_raw"
+			;;
+		sumratio)
+			deluge_ratio="$sumratio_raw"
+			;;
+		*)
+			echo "Invalid config parameter for \$trackerX_deluge_ratio, asuming localratio"
+			deluge_ratio="$localratio_raw"
+			;;
+	esac
+}
 
 #Checking the number of active torrents in deluge that are Active, Downloading or Seeding
 check_num_torrents_active() {
@@ -161,6 +257,7 @@ fi
 
 #Define the function that cleans up the temporary directory#
 remove_tmpdir() {
+	sleep 20
 	/bin/rmdir "${tmpdir}"
 }
 
@@ -224,10 +321,14 @@ set_label() {
 
 #We define a queue less or equal to $num_torrents_queue_max in deluge
 maintain_deluge_queue() {
-	while [[ ("$num_torrents_active" -le "$num_torrents_queue_max" && -z "${SKIP_SLEEP+x}" ) ]]
+	substitute_if_null "$deluge_queue_skip_tracker_codes" "$randomstring"
+	deluge_queue_skip_tracker_codes="$substvar"
+        while [[ ("$num_torrents_active" -le "$num_torrents_queue_max" && "${run_count}" -le "${run_count_max}" && -z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker ) ]]
 		do
-	        	echo "Number of torrents active ($num_torrents_active) in deluge is less or equal compared to threshold ($num_torrents_queue_max)"
-	        	sleep_func
+			echo "Number of torrents active ($num_torrents_active) in deluge is less or equal compared to threshold ($num_torrents_queue_max)"
+			echo "Iteration sequence is $run_count/$run_count_max"
+			sleep_func
+			run_count=$(( run_count + 1 ))
 	        	check_num_torrents_active
 		done
 }
@@ -248,7 +349,7 @@ remove_from_deluge() {
 	else
 		dc_remote_bin_rm_opts="exit"
 	fi
-	$dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_pass; $dc_remote_bin_rm_opts"
+	$dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; $dc_remote_bin_rm_opts"
 	$dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; $dc_local_bin_rm_opts"
 }
 
@@ -256,7 +357,7 @@ remove_from_deluge() {
 add_to_rtorrent() {
 	$rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" -q load.start '' "${tmpdir}/${torrentid}.torrent" "d.directory.set=\"$torrentpath\"" "d.custom1.set=\"$rlabel\"" "d.delete_tied="
 	sleep 20
-	$rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" -q d.custom.set "${torrentid}" deluge_ratio "${localratio_raw}"
+	$rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" -q d.custom.set "${torrentid}" deluge_ratio "${deluge_ratio}"
 }
 
 #Define the function that checks the status in rtorrent and tries to stop and hash check it
@@ -264,8 +365,10 @@ check_rtorrent_details() {
 	rtorrent_torrentdir=$($rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" d.get_base_path "$torrentid")
 	rtorrent_state=$($rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" d.state "$torrentid")
 	substitute_if_null "$rtorrent_state" 0
-	rtorrent_state=$substvar
-		if [[ $(realpath -s "$rtorrent_torrentdir/") = $(realpath -s "$torrentpath/$torrentname"/) && "$rtorrent_state" = "1" ]];then
+	rtorrent_state="$substvar"
+	substitute_if_null "$rtorrent_torrentdir" "$tmpdir"
+	rtorrent_torrentdir="$substvar"
+		if [[ $(realpath -s "$rtorrent_torrentdir") = $(realpath -s "$torrentpath/$torrentname") && "$rtorrent_state" = "1" ]];then
 			$rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" -q d.save_full_session "$torrentid"
 		        echo "Torrent moved successfully"
 		else
@@ -276,7 +379,7 @@ check_rtorrent_details() {
 			echo "Attempting to repair, sequence is $repair_run_count/$repair_run_count_max"
 				if [[ ("${repair_run_count}" -ge "${repair_run_count_max}") ]];then
 					echo "repair_run_count=$repair_run_count is above threshold $repair_run_count_max , bailing out"
-					exit 10
+					return 10
 				else
 					echo "Repair iteration sequence is $repair_run_count/$repair_run_count_max"
 					$rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" -q d.stop "${torrentid}"
@@ -302,6 +405,7 @@ check_rtorrent_details() {
 seed_shortterm() {
 	rlabel=$(echo "$t_folder_label""_short" | awk '{ print toupper($0) }')
 	run_chtor
+	deluge_ratio_to_send
 	remove_from_deluge
 	add_to_rtorrent
 	check_rtorrent_details
@@ -311,6 +415,7 @@ seed_shortterm() {
 seed_longterm() {
 	rlabel=$(echo "$t_folder_label""_long" | awk '{ print toupper($0) }')
 	run_chtor
+	deluge_ratio_to_send
 	remove_from_deluge
 	add_to_rtorrent
 	check_rtorrent_details

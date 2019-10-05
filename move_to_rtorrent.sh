@@ -5,17 +5,19 @@
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-	DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+	instdir="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 	SOURCE="$(readlink "$SOURCE")"
-	[[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+	[[ $SOURCE != /* ]] && SOURCE="$instdir/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
-DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+set -a
+instdir="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 
 #Import functions and settings and make sure they're exported to subshells
-set -a
-source "$DIR"/conf/settings.sh
-source "$DIR"/functions/functions.sh
-confdir="$DIR"/conf
+source "$instdir"/conf/settings.sh
+source "$instdir"/functions/functions.sh
+confdir="$instdir"/conf
+#We create directories (if needed)#
+create_directories
 set +a
 
 parent="$(cat /proc/$PPID/comm)"
@@ -29,11 +31,11 @@ fi
 
 #Run the actual script
 run_deluge_to_rtorrent_script() {
-	"$DIR"/bin/deluge_to_rtorrent.sh "${@}"
+	"$instdir"/bin/deluge_to_rtorrent.sh "${@}"
 }
 
 run_deluge_to_rtorrent_script_verb() {
-	"$DIR"/bin/deluge_to_rtorrent.sh "${@}"
+	"$instdir"/bin/deluge_to_rtorrent.sh "${@}"
 }
 
 if [[ "${parent}" == deluged ]]; then

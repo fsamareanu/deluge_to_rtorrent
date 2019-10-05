@@ -20,7 +20,7 @@ dc_remote_enable=1
 dc_remote_bin=$bindir/deluge1-console
 dc_remote_host=127.0.0.1:58846
 dc_remote_username=admin
-dc_remote_pass=deluge
+dc_remote_password=deluge
 #The deluge state directory so we can get the torrent file and enable fast resume prior to sending it to rtorrent. We avoid an unnecessary hash check that way.
 deluge_state_dir=$home/.config/deluge/state
 #This is a default string that's added in the rtorrent label for combinations of torrent sites that cannot be mapped to an internal code
@@ -71,6 +71,12 @@ tracker2_reannounce_url=
 ###############################################################
 ## Do not change these unless you know what you are doing    ##
 ###############################################################
+#Which ratio to send to deluge. Options are: local ratio, remote ratio, average between local and remote ratio,sum of local and remote ratio. Keywords are localratio,remoteratio,avgratio,sumratio.
+#Format is trackerX_deluge_ratio=value
+tracker1_deluge_ratio=remoteratio
+tracker2_deluge_ratio=sumratio
+#Torrents from these trackers aren't kept in the deluge queue. Have in mind that partial matches may be possible so try to keep the tracker codes as distinct as possible.
+deluge_queue_skip_tracker_codes="mysite|ipt"
 #Settings this to 1 enables timeout to external commands like dc_local_bin, dc_remote_bin and rtxmlrpc_bin
 enable_external_command_timeout=0
 #This is the maximum time (in seconds) we need to wait before killing a command and exiting with an error message
