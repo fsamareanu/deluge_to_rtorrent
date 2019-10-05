@@ -44,4 +44,5 @@ Edit settings.sh to match your environment
 
 If the script has any issues run it from command line and provide the screen output + the log mentioned at the top
 
-Pull requests are welcome. So is _constructive_ criticism.
+Pull requests are welcome. So is _constructive_ criticism.  
+Initial version of the script came from here: https://github.com/wseedbox/deluge-to-rtorrent . Kudos to them.
