@@ -10,8 +10,8 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 	[[ $SOURCE != /* ]] && SOURCE="$instdir/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
 set -a
+#Get the main directory where script resides
 instdir="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
-
 #Import functions and settings and make sure they're exported to subshells
 source "$instdir"/conf/settings.sh
 source "$instdir"/functions/functions.sh
