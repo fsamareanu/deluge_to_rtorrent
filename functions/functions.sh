@@ -50,6 +50,8 @@ min_ratio_move_remote
 )
 
 not_mandatory_array=(
+long_term_seed_label_suffix
+short_term_seed_label_suffix
 torrentname_in
 torrentpath_in
 )
