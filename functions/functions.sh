@@ -204,7 +204,6 @@ generate_random() {
 
 #Define function to calculate different ratios that are used further in the script#
 calculate_ratio() {
-	echo "Calculating ratio"
 	localratio_raw=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
 	check_null_parameter localratio_raw
 	remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
@@ -218,7 +217,6 @@ calculate_ratio() {
 	else
 		sumratio_raw=$(echo "$localratio_raw" "$remoteratio_raw" | awk '{ for(i=1; i<=NF;i++) j+=$i; print j /2; j=0 }')
 	fi
-	echo "Done"
 }
 
 deluge_ratio_to_send() {
