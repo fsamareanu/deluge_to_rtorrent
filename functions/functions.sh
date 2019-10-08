@@ -401,7 +401,9 @@ check_rtorrent_details() {
 
 #Define the short term seeding function that gets called from main loop if criteria matches
 seed_shortterm() {
-	rlabel=$(echo "$t_folder_label""_short" | awk '{ print toupper($0) }')
+	substitute_if_null "$short_term_seed_label_suffix" "_short"
+	short_term_seed_label_suffix="$substvar"
+	rlabel=$(echo "$t_folder_label$short_term_seed_label_suffix" | awk '{ print toupper($0) }')
 	run_chtor
 	deluge_ratio_to_send
 	remove_from_deluge
@@ -411,7 +413,9 @@ seed_shortterm() {
 
 #Define the long term seeding function that gets called from main loop if criteria matches
 seed_longterm() {
-	rlabel=$(echo "$t_folder_label""_long" | awk '{ print toupper($0) }')
+	substitute_if_null "$long_term_seed_label_suffix" "_long"
+	long_term_seed_label_suffix="$substvar"
+	rlabel=$(echo "$t_folder_label$long_term_seed_label_suffix" | awk '{ print toupper($0) }')
 	run_chtor
 	deluge_ratio_to_send
 	remove_from_deluge

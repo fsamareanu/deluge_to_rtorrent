@@ -29,6 +29,9 @@ deluge_queue_skip_tracker_codes="mysite|ipt"
 label_not_found_string=404
 #Where do we save the logs of the movement
 logdir=$home/logs/move_to_rtorrent
+#Define the suffix for long term/short term labels being pushed to rtorrent 
+long_term_seed_label_suffix=_long
+short_term_seed_label_suffix=_short
 #The minimum ratio for local and remote operations to be effective. If any of those 2 is less than the treshold then we enter a sleep loop for up to $step_sleep multiplied by $run_count_max seconds.
 min_ratio_move_local=1
 min_ratio_move_remote=1
