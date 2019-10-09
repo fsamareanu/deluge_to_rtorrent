@@ -342,8 +342,8 @@ maintain_deluge_queue() {
         while [[ ("$num_torrents_active" -le "$deluge_queue_num_torrents_max" && "${deluge_queue_run_count}" -le "${deluge_queue_run_count_max}" && -z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker ) ]]
 		do
 			echo "Number of torrents active ($num_torrents_active) in deluge is less than or equal to $deluge_queue_num_torrents_max"
-			echo "Iteration sequence is $run_count/$run_count_max"
-			sleep_func_p deluge_queue_step_sleep run_count
+			echo "Iteration sequence is $deluge_queue_run_count/$deluge_queue_run_count_max"
+			sleep_func_p deluge_queue_step_sleep deluge_queue_run_count
 	        	check_num_torrents_active
 		done
 }
