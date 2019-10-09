@@ -114,8 +114,7 @@ check_remote_enabled() {
 }
 
 check_timeout_enabled() {
-	substitute_if_null "$enable_external_command_timeout" 0
-	enable_external_command_timeout="$substvar"
+	substitute_if_null_p enable_external_command_timeout const0
 	substitute_if_null "$external_command_timeout" 60
 	external_command_timeout="$substvar"
 	if [[ ("${enable_external_command_timeout}" = "1") ]];then
@@ -131,8 +130,7 @@ check_timeout_enabled() {
 #This function gets the deluge version and sets variables based on it
 get_deluge_version() {
 	if [ -z "$1" ];then
-		substitute_if_null "$deluge_ver" 1
-		deluge_ver="${substvar}"
+		substitute_if_null_p deluge_ver const1
 	else
 		deluge_ver=$($1 -v|grep console|awk -F'[^0-9]*' '$0=$2')
 	fi
@@ -227,8 +225,7 @@ calculate_ratio() {
 	localratio_raw=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
 	check_null_parameter localratio_raw
 	remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
-	substitute_if_null "$remoteratio_raw" 0
-	remoteratio_raw=$substvar
+	substitute_if_null_p remoteratio_raw const0
 	localratio=$(echo "$localratio_raw" | awk '{print int($0)}')
 	remoteratio=$(echo "$remoteratio_raw" | awk '{print int($0)}')
 	averageratio_raw=$(echo "$localratio_raw" "$remoteratio_raw" | awk '{ for(i=1; i<=NF;i++) j+=$i; print j / 2; j=0 }')
@@ -241,8 +238,6 @@ calculate_ratio() {
 
 deluge_ratio_to_send() {
 	per_tracker_deluge_ratio=$(grep "^$configured_tracker_url_prefix"_deluge_ratio= "$confdir"/settings.sh|grep -v "#"|awk -F"=" '{print $2}')
-	substitute_if_null "$per_tracker_deluge_ratio" localratio
-	per_tracker_deluge_ratio=$substvar
 	case "$per_tracker_deluge_ratio" in
 		localratio)
 			deluge_ratio="$localratio_raw"
@@ -282,14 +277,12 @@ remove_tmpdir() {
 #Mapping tracker to a code for further use. Mapping the tracker variable to an internal code#
 set_tracker() {
 	tracker_line=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid" | grep "^Tracker"| awk -F: '{print $2}' | tr -d " "| egrep -iv 'announce|unregis|error'| awk 'FNR <= 1')
-	substitute_if_null "$tracker_line" default
-	tracker_line="$substvar"
+	substitute_if_null_p tracker_line stringdef
 	configured_tracker_url_prefix=$(grep "^tracker[0-99]_url_contains=" "$confdir"/settings.sh|grep "$tracker_line"|grep -v "#"|awk -F_ '{print $1}')
-	substitute_if_null "$configured_tracker_url_prefix" default
-	configured_tracker_url_prefix="$substvar"
+	substitute_if_null_p configured_tracker_url_prefix stringdef
 	configured_tracker_url_label=$(grep "^$configured_tracker_url_prefix"_code= "$confdir"/settings.sh|grep -v "#"|awk -F"=" '{print $2}')
-	substitute_if_null "$configured_tracker_url_label" default
-	tracker="$substvar"
+	substitute_if_null_p configured_tracker_url_label stringdef
+	tracker="$configured_tracker_url_label"
 }
 
 #Setting chtor options depending on whether reannounce is defined or not#
@@ -335,8 +328,7 @@ set_label() {
 #We define a queue less or equal to $deluge_queue_num_torrents_max in deluge
 maintain_deluge_queue() {
 	substitute_if_null_p deluge_queue_skip_tracker_codes randomstring
-	substitute_if_null "$deluge_queue_run_count" "1"
-	deluge_queue_run_count="$substvar"
+	substitute_if_null_p deluge_queue_run_count const1
 	substitute_if_null "$deluge_queue_run_count_max" "48"
 	deluge_queue_run_count_max="$substvar"
         while [[ ("$num_torrents_active" -le "$deluge_queue_num_torrents_max" && "${deluge_queue_run_count}" -le "${deluge_queue_run_count_max}" && -z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker ) ]]
@@ -379,8 +371,7 @@ add_to_rtorrent() {
 check_rtorrent_details() {
 	rtorrent_torrentdir=$($rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" d.get_base_path "$torrentid")
 	rtorrent_state=$($rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" d.state "$torrentid")
-	substitute_if_null "$rtorrent_state" 0
-	rtorrent_state="$substvar"
+	substitute_if_null_p rtorrent_state const0
 	substitute_if_null_p rtorrent_torrentdir tmpdir
 		if [[ $(realpath -s "$rtorrent_torrentdir") = $(realpath -s "$torrentpath/$torrentname") && "$rtorrent_state" = "1" ]];then
 			$rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" -q d.save_full_session "$torrentid"
