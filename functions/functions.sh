@@ -328,7 +328,7 @@ maintain_deluge_queue() {
 		do
 			echo "Number of torrents active ($num_torrents_active) in deluge is less than or equal to $deluge_queue_num_torrents_max"
 			echo "Iteration sequence is $run_count/$run_count_max"
-			sleep_func
+			sleep "$deluge_queue_step_sleep"
 			run_count=$(( run_count + 1 ))
 	        	check_num_torrents_active
 		done
