@@ -35,8 +35,9 @@ short_term_seed_label_suffix=_short
 #The minimum ratio for local and remote operations to be effective. If any of those 2 is less than the treshold then we enter a sleep loop for up to $step_sleep multiplied by $run_count_max seconds.
 min_ratio_move_local=1
 min_ratio_move_remote=1
-#If num_torrents_queue_max is greater than 0 then we keep up to $num_torrents_queue_max torrents active in deluge. If the number of running torrents in deluge is above $num_torrents_queue_max then we send some of them to rtorrent
-num_torrents_queue_max=0
+#If deluge_queue_num_torrents_max is greater than 0 then we keep up to $deluge_queue_num_torrents_max torrents active in deluge. If the number of running torrents in deluge is above $deluge_queue_num_torrents_max then we send some of them to rtorrent
+deluge_queue_num_torrents_max=0
+deluge_queue_step_sleep=3600
 #The paths here are only used to assign a (composite) label to a torrent, like movies, series, pr0n, etc
 #The paths must be absolute. For a value of path1="/a/b/c|abc" and tracker1_code=bla the resulting label, depending if deluge ratio >= $min_ratio_move_local, would be BLA_ABC_SHORT (or LONG if deluge ratio < $min_ratio_move_local
 #If the torrent download path doesn't match any of the below criteria, a default label of DEFAULT_404_SHORT (or LONG) is assigned.
