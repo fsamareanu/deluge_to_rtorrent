@@ -166,6 +166,11 @@ substitute_if_null_p() {
 	fi
 }
 
+#Define a function to convert numbers to positive. Don't ask ...
+convert_to_positive_p() {
+	eval "$1"="$(echo "${!1}" | awk -vRS=" " -vORS=" " '{ print ($1 < 0) ? ($1 * -1) : $1 }')"
+}
+
 #Do a sanity check on the input, make sure only alphanumeric input was provided#
 check_torrentid_correct() {
 	if [[ "$torrentid" =~ [^a-zA-Z0-9] ]];then
@@ -224,16 +229,14 @@ generate_random() {
 calculate_ratio() {
 	localratio_raw=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
 	check_null_parameter localratio_raw
+	convert_to_positive_p localratio_raw
 	[[ "$dc_remote_enable" -eq 1 ]] && remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
 	substitute_if_null_p remoteratio_raw const0
+	convert_to_positive_p remoteratio_raw
 	localratio=$(echo "$localratio_raw" | awk '{print int($0)}')
 	remoteratio=$(echo "$remoteratio_raw" | awk '{print int($0)}')
 	averageratio_raw=$(echo "$localratio_raw" "$remoteratio_raw" | awk '{ for(i=1; i<=NF;i++) j+=$i; print j / 2; j=0 }')
-	if [[ ("$dc_remote_enable" == "1") ]];then
-		sumratio_raw=$(echo "$localratio_raw" "$remoteratio_raw" | awk '{ for(i=1; i<=NF;i++) j+=$i; print j ; j=0 }')
-	else
-		sumratio_raw=$(echo "$localratio_raw" "$remoteratio_raw" | awk '{ for(i=1; i<=NF;i++) j+=$i; print j /2; j=0 }')
-	fi
+	sumratio_raw=$(echo "$localratio_raw" "$remoteratio_raw" | awk '{ for(i=1; i<=NF;i++) j+=$i; print j ; j=0 }')
 }
 
 deluge_ratio_to_send() {
