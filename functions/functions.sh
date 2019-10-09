@@ -92,7 +92,7 @@ sleep_func_p() {
 	if [[ -z "${SKIP_SLEEP+x}" ]];then
 		echo "Sleeping for ${!1} seconds"
 		sleep "${!1}"
-		run_count=$(( "${!2}" + 1 ))
+		eval "$2"=$(( "${!2}" + 1 ))
 	else
 		echo "SKIP_SLEEP bypass detected, not sleeping"
 	fi
