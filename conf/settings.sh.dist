@@ -28,7 +28,7 @@ deluge_queue_skip_tracker_codes="mysite|ipt"
 #This is a default string that's added in the rtorrent label for combinations of torrent sites that cannot be mapped to an internal code
 label_not_found_string=404
 #Where do we save the logs of the movement
-logdir=$home/logs/move_to_rtorrent
+logdir=$instdir/logs/move_to_rtorrent
 #Define the suffix for long term/short term labels being pushed to rtorrent 
 long_term_seed_label_suffix=_long
 short_term_seed_label_suffix=_short
@@ -36,7 +36,7 @@ short_term_seed_label_suffix=_short
 min_ratio_move_local=1
 min_ratio_move_remote=1
 #If deluge_queue_num_torrents_max is greater than 0 then we keep up to $deluge_queue_num_torrents_max torrents active in deluge. If the number of running torrents in deluge is above $deluge_queue_num_torrents_max then we send some of them to rtorrent
-deluge_queue_num_torrents_max=0
+deluge_queue_num_torrents_max=4
 deluge_queue_step_sleep=3600
 #The paths here are only used to assign a (composite) label to a torrent, like movies, series, pr0n, etc
 #The paths must be absolute. For a value of path1="/a/b/c|abc" and tracker1_code=bla the resulting label, depending if deluge ratio >= $min_ratio_move_local, would be BLA_ABC_SHORT (or LONG if deluge ratio < $min_ratio_move_local
@@ -59,7 +59,7 @@ rtxmlrpc_socket=/run/rtorrent/rtorrent.sock
 #Which ratio to send to deluge. Options are: local ratio, remote ratio, average between local and remote ratio,sum of local and remote ratio. Keywords are localratio,remoteratio,avgratio,sumratio.
 #Format is trackerX_deluge_ratio=value
 tracker1_deluge_ratio=remoteratio
-tracker2_deluge_ratio=sumratio
+tracker2_deluge_ratio=avgratio
 #We use tracker*_url_contains to map a tracker to an easy-to-read code. The script uses these partial URLs to map an announce URL to a tracker code.
 #These fields can also be blank and default values are assigned (tracker_code will be DEFAULT for any unlisted URLs). Have in mind some sites have multiple announce URLs defined and all the partial values will need to be added in the list.
 tracker1_url_contains="*host.name*"
@@ -90,7 +90,7 @@ const1=1
 stringdef=default
 #End default values
 #Settings this to 1 enables timeout to external commands like dc_local_bin, dc_remote_bin and rtxmlrpc_bin
-enable_external_command_timeout=0
+enable_external_command_timeout=1
 #This is the maximum time (in seconds) we need to wait before killing a command and exiting with an error message
 #This was implemented because various commands (like deluge-console) like to hang indefinitely, especially on protocol mismatch
 #For now there's a hardcoded list of commands where this is used: dc_local_bin,dc_remote_bin and rtxmlrpc_bin
@@ -98,7 +98,7 @@ external_command_timeout=60
 run_count=1
 run_count_max=48
 deluge_queue_run_count=1
-deluge_queue_run_count_max=48
+deluge_queue_run_count_max=40
 repair_run_count=1
 repair_run_count_max=8
 torrentid=$1
