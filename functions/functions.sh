@@ -51,6 +51,9 @@ min_ratio_move_remote
 )
 
 not_mandatory_array=(
+
+deluge_queue_run_count
+deluge_queue_run_count_max
 long_term_seed_label_suffix
 short_term_seed_label_suffix
 torrentname_in
@@ -332,7 +335,11 @@ set_label() {
 maintain_deluge_queue() {
 	substitute_if_null "$deluge_queue_skip_tracker_codes" "$randomstring"
 	deluge_queue_skip_tracker_codes="$substvar"
-        while [[ ("$num_torrents_active" -le "$deluge_queue_num_torrents_max" && "${run_count}" -le "${run_count_max}" && -z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker ) ]]
+	substitute_if_null "$deluge_queue_run_count" "1"
+	deluge_queue_run_count="$substvar"
+	substitute_if_null "$deluge_queue_run_count_max" "48"
+	deluge_queue_run_count_max="$substvar"
+        while [[ ("$num_torrents_active" -le "$deluge_queue_num_torrents_max" && "${deluge_queue_run_count}" -le "${deluge_queue_run_count_max}" && -z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker ) ]]
 		do
 			echo "Number of torrents active ($num_torrents_active) in deluge is less than or equal to $deluge_queue_num_torrents_max"
 			echo "Iteration sequence is $run_count/$run_count_max"
