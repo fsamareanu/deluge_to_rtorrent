@@ -192,16 +192,14 @@ check_url() {
 #Retrieve torrent name and check that torrent name is not blank#
 get_torrent_name() {
 	torrentname=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid"| grep "^Name: " | awk -F':[[:blank:]]*' '{print $2}')
-	substitute_if_null "$torrentname" "$torrentname_in"
-	torrentname="$substvar"
+	substitute_if_null_p torrentname torrentname_in
 	check_null_parameter torrentname
 }
 
 #Retrieve torrent path and make sure it is not blank#
 get_torrent_path() {
 	torrentpath="$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid"| grep "^Download Folder: " | awk -F':[[:blank:]]*' '{print $2}')"
-	substitute_if_null "$torrentpath" "$torrentpath_in"
-	torrentpath="$substvar"
+	substitute_if_null_p torrentpath torrentpath_in
 	check_null_parameter torrentpath
 	validate_file_folder "$torrentpath/$torrentname"
 }
@@ -330,14 +328,13 @@ set_label() {
 			fi
 		done < <(grep "^path[1-99]" "$confdir"/settings.sh | awk -F'"' '{print $2}')
 
-	substitute_if_null "$t_folder_label" "$label_not_found_string"
-	t_folder_label="$tracker""_""$substvar"
+	substitute_if_null_p t_folder_label label_not_found_string
+	t_folder_label="$tracker""_""$t_folder_label"
 }
 
 #We define a queue less or equal to $deluge_queue_num_torrents_max in deluge
 maintain_deluge_queue() {
-	substitute_if_null "$deluge_queue_skip_tracker_codes" "$randomstring"
-	deluge_queue_skip_tracker_codes="$substvar"
+	substitute_if_null_p deluge_queue_skip_tracker_codes randomstring
 	substitute_if_null "$deluge_queue_run_count" "1"
 	deluge_queue_run_count="$substvar"
 	substitute_if_null "$deluge_queue_run_count_max" "48"
@@ -384,8 +381,7 @@ check_rtorrent_details() {
 	rtorrent_state=$($rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" d.state "$torrentid")
 	substitute_if_null "$rtorrent_state" 0
 	rtorrent_state="$substvar"
-	substitute_if_null "$rtorrent_torrentdir" "$tmpdir"
-	rtorrent_torrentdir="$substvar"
+	substitute_if_null_p rtorrent_torrentdir tmpdir
 		if [[ $(realpath -s "$rtorrent_torrentdir") = $(realpath -s "$torrentpath/$torrentname") && "$rtorrent_state" = "1" ]];then
 			$rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" -q d.save_full_session "$torrentid"
 		        echo "Torrent moved successfully"
