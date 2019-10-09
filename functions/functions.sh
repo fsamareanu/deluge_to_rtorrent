@@ -280,9 +280,8 @@ set_tracker() {
 	substitute_if_null_p tracker_line stringdef
 	configured_tracker_url_prefix=$(grep "^tracker[0-99]_url_contains=" "$confdir"/settings.sh|grep "$tracker_line"|grep -v "#"|awk -F_ '{print $1}')
 	substitute_if_null_p configured_tracker_url_prefix stringdef
-	configured_tracker_url_label=$(grep "^$configured_tracker_url_prefix"_code= "$confdir"/settings.sh|grep -v "#"|awk -F"=" '{print $2}')
-	substitute_if_null_p configured_tracker_url_label stringdef
-	tracker="$configured_tracker_url_label"
+	tracker=$(grep "^$configured_tracker_url_prefix"_code= "$confdir"/settings.sh|grep -v "#"|awk -F"=" '{print $2}')
+	substitute_if_null_p tracker stringdef
 }
 
 #Setting chtor options depending on whether reannounce is defined or not#
