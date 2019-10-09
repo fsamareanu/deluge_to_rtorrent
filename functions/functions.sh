@@ -88,6 +88,16 @@ sleep_func() {
 	fi
 }
 
+sleep_func_p() {
+	if [[ -z "${SKIP_SLEEP+x}" ]];then
+		echo "Sleeping for ${!1} seconds"
+		sleep "${!1}"
+		run_count=$(( "${!2}" + 1 ))
+	else
+		echo "SKIP_SLEEP bypass detected, not sleeping"
+	fi
+}
+
 #Check if remote operations are enabled. If not, set variables to known ones
 check_remote_enabled() {
 	if [[ "$dc_remote_enable" = "0" ]]; then
@@ -129,12 +139,10 @@ get_deluge_version() {
 
 #Check input parameters are correct#
 check_null_parameter() {
-#	echo "Checking if $1 is null"
         if [ -z "${!1}" ];then
                 echo "Variable $1 is null, exiting"
                 return 10
         else
-#                echo "It's not null"
 		true
         fi
 }
@@ -328,8 +336,7 @@ maintain_deluge_queue() {
 		do
 			echo "Number of torrents active ($num_torrents_active) in deluge is less than or equal to $deluge_queue_num_torrents_max"
 			echo "Iteration sequence is $run_count/$run_count_max"
-			sleep "$deluge_queue_step_sleep"
-			run_count=$(( run_count + 1 ))
+			sleep_func_p deluge_queue_step_sleep run_count
 	        	check_num_torrents_active
 		done
 }
@@ -448,7 +455,8 @@ eval_tracker_ratio() {
 			return
 		else
 			echo "Iteration sequence is $run_count/$run_count_max"
-			sleep_func
+			sleep_func_p step_sleep run_count
+#			sleep_func
 			calculate_ratio
 			eval_tracker_ratio
 		fi
@@ -461,7 +469,8 @@ eval_tracker_ratio() {
 			return
 		else
 			echo "Iteration sequence is $run_count/$run_count_max"
-			sleep_func
+			sleep_func_p step_sleep run_count
+#			sleep_func
 			calculate_ratio
 			eval_tracker_ratio
 		fi
