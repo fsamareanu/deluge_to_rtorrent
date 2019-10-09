@@ -28,7 +28,8 @@ deluge_state_dir
 enable_external_command_timeout
 label_not_found_string
 logdir
-num_torrents_queue_max
+deluge_queue_num_torrents_max
+deluge_queue_step_sleep
 r_step_sleep
 step_sleep
 rtxmlrpc_bin
@@ -319,13 +320,13 @@ set_label() {
 	t_folder_label="$tracker""_""$substvar"
 }
 
-#We define a queue less or equal to $num_torrents_queue_max in deluge
+#We define a queue less or equal to $deluge_queue_num_torrents_max in deluge
 maintain_deluge_queue() {
 	substitute_if_null "$deluge_queue_skip_tracker_codes" "$randomstring"
 	deluge_queue_skip_tracker_codes="$substvar"
-        while [[ ("$num_torrents_active" -le "$num_torrents_queue_max" && "${run_count}" -le "${run_count_max}" && -z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker ) ]]
+        while [[ ("$num_torrents_active" -le "$deluge_queue_num_torrents_max" && "${run_count}" -le "${run_count_max}" && -z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker ) ]]
 		do
-			echo "Number of torrents active ($num_torrents_active) in deluge is less or equal compared to threshold ($num_torrents_queue_max)"
+			echo "Number of torrents active ($num_torrents_active) in deluge is less than or equal to $deluge_queue_num_torrents_max"
 			echo "Iteration sequence is $run_count/$run_count_max"
 			sleep_func
 			run_count=$(( run_count + 1 ))
