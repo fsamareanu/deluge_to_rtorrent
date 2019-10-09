@@ -160,6 +160,14 @@ substitute_if_null() {
         fi
 }
 
+substitute_if_null_p() {
+	if [ -z "${!1}" ]; then
+		eval "$1"="${!2}"
+	else
+		true
+	fi
+}
+
 #Do a sanity check on the input, make sure only alphanumeric input was provided#
 check_torrentid_correct() {
 	if [[ "$torrentid" =~ [^a-zA-Z0-9] ]];then
