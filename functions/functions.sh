@@ -317,11 +317,6 @@ create_directories() {
 	tmpdir=$(mktemp -d -t deluge-to-rt-XXXXXXXXXX)
 }
 
-#Trim the trailing slash from folder paths
-trim_trailing_slash() {
-        echo "$1" | sed 's:/*$::'
-}
-
 #Map folder to a label#
 set_label() {
 	while IFS= read -r line
