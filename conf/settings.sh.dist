@@ -84,6 +84,11 @@ tracker2_reannounce_url=
 ###############################################################
 ## Do not change these unless you know what you are doing    ##
 ###############################################################
+#Default values
+const0=0
+const1=1
+stringdef=default
+#End default values
 #Settings this to 1 enables timeout to external commands like dc_local_bin, dc_remote_bin and rtxmlrpc_bin
 enable_external_command_timeout=0
 #This is the maximum time (in seconds) we need to wait before killing a command and exiting with an error message
