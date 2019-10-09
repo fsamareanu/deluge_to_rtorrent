@@ -261,11 +261,7 @@ deluge_ratio_to_send() {
 #Checking the number of active torrents in deluge that are Active, Downloading or Seeding
 check_num_torrents_active() {
 	num_torrents_active=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password;info"|egrep "\[C\]|\[S\]"|wc -l)
-	if [ -z "$num_torrents_active" ];then
-		num_torrents_active=0
-	else
-		true
-fi
+	substitute_if_null_p num_torrents_active const0
 }
 
 #Define the function that cleans up the temporary directory#
@@ -328,8 +324,7 @@ set_label() {
 maintain_deluge_queue() {
 	substitute_if_null_p deluge_queue_skip_tracker_codes randomstring
 	substitute_if_null_p deluge_queue_run_count const1
-	substitute_if_null "$deluge_queue_run_count_max" "48"
-	deluge_queue_run_count_max="$substvar"
+	substitute_if_null_p deluge_queue_run_count_max const1
         while [[ ("$num_torrents_active" -le "$deluge_queue_num_torrents_max" && "${deluge_queue_run_count}" -le "${deluge_queue_run_count_max}" && -z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker ) ]]
 		do
 			echo "Number of torrents active ($num_torrents_active) in deluge is less than or equal to $deluge_queue_num_torrents_max"
