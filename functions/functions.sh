@@ -224,7 +224,7 @@ generate_random() {
 calculate_ratio() {
 	localratio_raw=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
 	check_null_parameter localratio_raw
-	remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
+	[[ "$dc_remote_enable" -eq 1 ]] && remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
 	substitute_if_null_p remoteratio_raw const0
 	localratio=$(echo "$localratio_raw" | awk '{print int($0)}')
 	remoteratio=$(echo "$remoteratio_raw" | awk '{print int($0)}')
@@ -350,7 +350,7 @@ remove_from_deluge() {
 	else
 		dc_remote_bin_rm_opts="exit"
 	fi
-	$dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; $dc_remote_bin_rm_opts"
+	[[ "$dc_remote_enable" -eq 1 ]] && $dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; $dc_remote_bin_rm_opts"
 	$dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; $dc_local_bin_rm_opts"
 }
 
