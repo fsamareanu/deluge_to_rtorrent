@@ -263,7 +263,7 @@ deluge_ratio_to_send() {
 
 #Checking the number of active torrents in deluge that are Active, Downloading or Seeding
 check_num_torrents_active() {
-	num_torrents_active=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password;info"|egrep "\[C\]|\[S\]"|wc -l)
+	num_torrents_active=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password;info"|egrep "\[S\]"|wc -l)
 	substitute_if_null_p num_torrents_active const0
 }
 
