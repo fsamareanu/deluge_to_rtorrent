@@ -37,7 +37,9 @@ min_ratio_move_local=1
 min_ratio_move_remote=1
 #If deluge_queue_num_torrents_max is greater than 0 then we keep up to $deluge_queue_num_torrents_max torrents active in deluge. If the number of running torrents in deluge is above $deluge_queue_num_torrents_max then we send some of them to rtorrent
 deluge_queue_num_torrents_max=4
-deluge_queue_step_sleep=3600
+deluge_queue_step_sleep=600
+deluge_queue_run_count=1
+deluge_queue_run_count_max=40
 #The paths here are only used to assign a (composite) label to a torrent, like movies, series, pr0n, etc
 #The paths must be absolute. For a value of path1="/a/b/c|abc" and tracker1_code=bla the resulting label, depending if deluge ratio >= $min_ratio_move_local, would be BLA_ABC_SHORT (or LONG if deluge ratio < $min_ratio_move_local
 #If the torrent download path doesn't match any of the below criteria, a default label of DEFAULT_404_SHORT (or LONG) is assigned.
@@ -49,9 +51,13 @@ path4="/home/transmission/Seriale_Desene|Seriale_Desene"
 path5="/home/transmission/Others|Others"
 #The script tries to achieve a ratio of at least min_ratio_move_local for local torrents and at least min_ratio_move_remote for remote torrents. This is done by entering a sleep loop for $step_sleep multiplied by $run_count_max seconds.
 #If the loop completes and desired ratio isn't met then the torrent is sent with LONG label to rtorrent.
-#r_step_sleep is similarly used for a pause between recovery attempts in rtorrent since randomly rtorrent bugs and doesn't add the torrent correctly.
-r_step_sleep=600
+#repair_step_sleep is similarly used for a pause between recovery attempts in rtorrent since randomly rtorrent bugs and doesn't add the torrent correctly.
+repair_step_sleep=600
+repair_run_count=1
+repair_run_count_max=8
 step_sleep=600
+run_count=1
+run_count_max=48
 #We need rtxmlrpc to load the torrent to rtorrent.
 rtxmlrpc_bin=$bindir/rtxmlrpc
 #Path to rtxmlrpc socket
@@ -95,12 +101,6 @@ enable_external_command_timeout=1
 #This was implemented because various commands (like deluge-console) like to hang indefinitely, especially on protocol mismatch
 #For now there's a hardcoded list of commands where this is used: dc_local_bin,dc_remote_bin and rtxmlrpc_bin
 external_command_timeout=60
-run_count=1
-run_count_max=48
-deluge_queue_run_count=1
-deluge_queue_run_count_max=40
-repair_run_count=1
-repair_run_count_max=8
 torrentid=$1
 torrentname_in=$2
 torrentpath_in=$3
