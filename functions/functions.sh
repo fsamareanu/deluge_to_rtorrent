@@ -30,7 +30,7 @@ label_not_found_string
 logdir
 deluge_queue_num_torrents_max
 deluge_queue_step_sleep
-r_step_sleep
+repair_step_sleep
 step_sleep
 rtxmlrpc_bin
 rtxmlrpc_socket
@@ -399,7 +399,7 @@ check_rtorrent_details() {
 					$rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" -q d.start "${torrentid}"
 					sleep 2
 					repair_run_count=$(( repair_run_count + 1 ))
-					sleep "$r_step_sleep"
+					sleep "$repair_step_sleep"
 					check_rtorrent_details
 				fi
 		fi
