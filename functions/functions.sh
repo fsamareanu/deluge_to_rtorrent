@@ -313,7 +313,7 @@ set_label() {
 			t_configured_path=$(echo "$line"|awk -F'|' '{print $1}')
 			validate_file_folder "$t_configured_path"
 			t_configured_label=$(echo "$line"|awk -F'|' '{print $2}')
-			if [[ ($(realpath -s "$torrentpath") == $(realpath -s "$t_configured_path")) ]];then
+			if [[ ("$(realpath -s "$torrentpath")" == "$(realpath -s "$t_configured_path")") ]];then
 				t_folder_label="$t_configured_label"
 				break
 			fi
@@ -372,7 +372,7 @@ check_rtorrent_details() {
 	rtorrent_state=$($rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" d.state "$torrentid")
 	substitute_if_null_p rtorrent_state const0
 	substitute_if_null_p rtorrent_torrentdir tmpdir
-		if [[ $(realpath -s "$rtorrent_torrentdir") = $(realpath -s "$torrentpath/$torrentname") && "$rtorrent_state" = "1" ]];then
+		if [[ "$(realpath -s "$rtorrent_torrentdir")" = "$(realpath -s "$torrentpath/$torrentname")" && "$rtorrent_state" = "1" ]];then
 			$rtxmlrpc_bin -Dscgi_url="$rtxmlrpc_socket" -q d.save_full_session "$torrentid"
 		        echo "Torrent moved successfully"
 		else
