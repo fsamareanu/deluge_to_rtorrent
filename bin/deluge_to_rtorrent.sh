@@ -1,5 +1,6 @@
 #Enable/disable debug based on switch#
 if [[ -z "${from_shell}" ]];then
+	[[ "$always_debug" = 1 ]] && set -x
 	set -e
 	alias exit_on_function_fail="exit 10"
 else
