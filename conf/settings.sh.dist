@@ -90,6 +90,8 @@ tracker2_reannounce_url=
 ###############################################################
 ## Do not change these unless you know what you are doing    ##
 ###############################################################
+#Do we always enable debug in the scripts
+always_debug=0
 #Default values
 const0=0
 const1=1
