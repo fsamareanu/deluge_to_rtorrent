@@ -328,7 +328,7 @@ maintain_deluge_queue() {
 	substitute_if_null_p deluge_queue_skip_tracker_codes randomstring
 	substitute_if_null_p deluge_queue_run_count const1
 	substitute_if_null_p deluge_queue_run_count_max const1
-	[[ (-z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker) ]] && echo "Number of torrents active ($num_torrents_active) in deluge is less than or equal to $deluge_queue_num_torrents_max" && echo "Iteration sequence is $deluge_queue_run_count/$deluge_queue_run_count_max" && sleep_func_p deluge_queue_step_sleep deluge_queue_run_count
+	[[ (-z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker) ]] && echo "Number of torrents active in deluge is $num_torrents_active" && echo "Iteration sequence is $deluge_queue_run_count/$deluge_queue_run_count_max" && sleep_func_p deluge_queue_step_sleep deluge_queue_run_count
 	check_num_torrents_active
         while [[ ("$num_torrents_active" -le "$deluge_queue_num_torrents_max" && "${deluge_queue_run_count}" -le "${deluge_queue_run_count_max}" && -z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker ) ]]
 		do
@@ -431,6 +431,7 @@ seed_longterm() {
 
 #We evaluate the ratios and call one of the above functions based on outcome#
 eval_tracker_ratio() {
+	calculate_ratio
 	if [[ ("${localratio}" -ge "${min_ratio_move_local}"  && "${remoteratio}" -ge "${min_ratio_move_remote}") ]];then
 		echo "Tracker is $tracker , local ratio $localratio_raw is greater than ${min_ratio_move_local} and remote ratio $remoteratio_raw is greater than ${min_ratio_move_remote}."
 		echo "Moving torrent to short term seeding."
@@ -453,7 +454,7 @@ eval_tracker_ratio() {
 			echo "Iteration sequence is $run_count/$run_count_max"
 			sleep_func_p step_sleep run_count
 #			sleep_func
-			calculate_ratio
+#			calculate_ratio
 			eval_tracker_ratio
 		fi
 
@@ -467,7 +468,7 @@ eval_tracker_ratio() {
 			echo "Iteration sequence is $run_count/$run_count_max"
 			sleep_func_p step_sleep run_count
 #			sleep_func
-			calculate_ratio
+#			calculate_ratio
 			eval_tracker_ratio
 		fi
 	else
