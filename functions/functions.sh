@@ -230,7 +230,7 @@ calculate_ratio() {
 	localratio_raw=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
 	check_null_parameter localratio_raw
 	convert_to_positive_p localratio_raw
-	[[ "$dc_remote_enable" -eq 1 ]] && remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
+	[[ "$dc_remote_enable" -eq 1 ]] && remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}') || substitute_if_null_p remoteratio_raw const1
 	substitute_if_null_p remoteratio_raw const0
 	convert_to_positive_p remoteratio_raw
 	localratio=$(echo "$localratio_raw" | awk '{print int($0)}')
@@ -328,7 +328,7 @@ maintain_deluge_queue() {
 	substitute_if_null_p deluge_queue_skip_tracker_codes randomstring
 	substitute_if_null_p deluge_queue_run_count const1
 	substitute_if_null_p deluge_queue_run_count_max const1
-	[[ (-z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker) ]] && echo "Number of torrents active in deluge is $num_torrents_active" && echo "Iteration sequence is $deluge_queue_run_count/$deluge_queue_run_count_max" && sleep_func_p deluge_queue_step_sleep deluge_queue_run_count
+	[[ (-z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker && "$num_torrents_active" -le "$deluge_queue_num_torrents_max") ]] && echo "Number of torrents active in deluge is $num_torrents_active" && echo "Iteration sequence is $deluge_queue_run_count/$deluge_queue_run_count_max" && sleep_func_p deluge_queue_step_sleep deluge_queue_run_count
 	check_num_torrents_active
         while [[ ("$num_torrents_active" -le "$deluge_queue_num_torrents_max" && "${deluge_queue_run_count}" -le "${deluge_queue_run_count_max}" && -z "${SKIP_SLEEP+x}" && ! "$deluge_queue_skip_tracker_codes" =~ $tracker ) ]]
 		do
