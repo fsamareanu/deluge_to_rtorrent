@@ -230,7 +230,12 @@ calculate_ratio() {
 	localratio_raw=$($dc_local_bin "connect $dc_local_host $dc_local_username $dc_local_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
 	check_null_parameter localratio_raw
 	convert_to_positive_p localratio_raw
-	[[ "$dc_remote_enable" -eq 1 ]] && remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}') || substitute_if_null_p remoteratio_raw const1
+	if [[ "$dc_remote_enable" -eq 1 ]]
+	then
+		remoteratio_raw=$($dc_remote_bin "connect $dc_remote_host $dc_remote_username $dc_remote_password; info -v $torrentid" | grep Ratio: | awk -F "Ratio: " '{print $2}')
+	else
+		substitute_if_null_p remoteratio_raw const1
+	fi
 	substitute_if_null_p remoteratio_raw const0
 	convert_to_positive_p remoteratio_raw
 	localratio=$(echo "$localratio_raw" | awk '{print int($0)}')
@@ -432,19 +437,19 @@ seed_longterm() {
 #We evaluate the ratios and call one of the above functions based on outcome#
 eval_tracker_ratio() {
 	calculate_ratio
-	if [[ ("${localratio}" -ge "${min_ratio_move_local}"  && "${remoteratio}" -ge "${min_ratio_move_remote}") ]];then
+	if [[ ("$dc_remote_enable" -eq 1 && "${localratio}" -ge "${min_ratio_move_local}"  && "${remoteratio}" -ge "${min_ratio_move_remote}") ]];then
 		echo "Tracker is $tracker , local ratio $localratio_raw is greater than ${min_ratio_move_local} and remote ratio $remoteratio_raw is greater than ${min_ratio_move_remote}."
 		echo "Moving torrent to short term seeding."
 		seed_shortterm
 		return
 
-	elif [[ ("$localratio" -ge "${min_ratio_move_local}" && "$remoteratio" -lt "${min_ratio_move_remote}") ]];then
+	elif [[ ("$dc_remote_enable" -eq 1 && "$localratio" -ge "${min_ratio_move_local}" && "$remoteratio" -lt "${min_ratio_move_remote}") ]];then
 		echo "Tracker is $tracker , local ratio $localratio_raw is greater than ${min_ratio_move_local} and remote ratio $remoteratio_raw is less than ${min_ratio_move_remote}."
 		echo "Moving torrent to long term seeding."
 		seed_longterm
 		return
 
-	elif [[ ("$localratio" -lt "${min_ratio_move_local}" && "$remoteratio" -ge "${min_ratio_move_remote}") ]];then
+	elif [[ ("$dc_remote_enable" -eq 1 && "$localratio" -lt "${min_ratio_move_local}" && "$remoteratio" -ge "${min_ratio_move_remote}") ]];then
 		echo "Tracker is $tracker , local ratio $localratio_raw is less than ${min_ratio_move_local} and remote ratio $remoteratio_raw is greater than than ${min_ratio_move_remote}."
 		if [[ ("${run_count}" -ge "${run_count_max}" || -n "${SKIP_SLEEP+x}") ]];then
 			echo "run_count=$run_count is above threshold $run_count_max or SKIP_SLEEP bypass detected, force-moving to long term"
@@ -453,24 +458,35 @@ eval_tracker_ratio() {
 		else
 			echo "Iteration sequence is $run_count/$run_count_max"
 			sleep_func_p step_sleep run_count
-#			sleep_func
-#			calculate_ratio
 			eval_tracker_ratio
 		fi
 
-	elif [[ ("$localratio" -lt "${min_ratio_move_local}" && "$remoteratio" -lt "${min_ratio_move_remote}") ]];then
+	elif [[ ("$dc_remote_enable" -eq 1 && "$localratio" -lt "${min_ratio_move_local}" && "$remoteratio" -lt "${min_ratio_move_remote}") ]];then
 		echo "Tracker is $tracker , local ratio $localratio_raw is less than ${min_ratio_move_local} or remote ratio $remoteratio_raw is less than ${min_ratio_move_remote}."
 		if [[ ("${run_count}" -ge "${run_count_max}" || -n "${SKIP_SLEEP+x}") ]];then
 			echo "run_count=$run_count is above threshold $run_count_max or SKIP_SLEEP bypass detected, force-moving to long term"
 			seed_longterm
 			return
+
+	elif [[ ("$localratio" -lt "${min_ratio_move_local}") ]];then
+		echo "Tracker is $tracker , local ratio $localratio_raw is less than ${min_ratio_move_local}."
+		if [[ ("${run_count}" -ge "${run_count_max}" || -n "${SKIP_SLEEP+x}") ]];then
+			echo "run_count=$run_count is above threshold $run_count_max or SKIP_SLEEP bypass detected, force-moving to long term"
+			seed_longterm
+			return
+		fi
 		else
 			echo "Iteration sequence is $run_count/$run_count_max"
 			sleep_func_p step_sleep run_count
-#			sleep_func
-#			calculate_ratio
 			eval_tracker_ratio
 		fi
+
+	elif [[ ("${localratio}" -ge "${min_ratio_move_local}" ) ]];then
+		echo "Tracker is $tracker , local ratio $localratio_raw is greater than ${min_ratio_move_local}."
+		echo "Moving torrent to short term seeding."
+		seed_shortterm
+		return
+
 	else
 		echo "Tracker is $tracker , local ratio is $localratio_raw."
 		echo "Moving torrent to long term seeding."
