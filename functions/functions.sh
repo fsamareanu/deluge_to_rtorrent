@@ -443,6 +443,12 @@ eval_tracker_ratio() {
 		seed_shortterm
 		return
 
+        elif [[ ("$dc_remote_enable" -eq 0 && "${localratio}" -ge "${min_ratio_move_local}" ) ]];then
+                echo "Tracker is $tracker , local ratio $localratio_raw is greater than ${min_ratio_move_local}."
+                echo "Moving torrent to short term seeding."
+                seed_shortterm
+                return
+
 	elif [[ ("$dc_remote_enable" -eq 1 && "$localratio" -ge "${min_ratio_move_local}" && "$remoteratio" -lt "${min_ratio_move_remote}") ]];then
 		echo "Tracker is $tracker , local ratio $localratio_raw is greater than ${min_ratio_move_local} and remote ratio $remoteratio_raw is less than ${min_ratio_move_remote}."
 		echo "Moving torrent to long term seeding."
@@ -461,34 +467,27 @@ eval_tracker_ratio() {
 			eval_tracker_ratio
 		fi
 
+        elif [[ ("$dc_remote_enable" -eq 0 && "$localratio" -lt "${min_ratio_move_local}") ]];then
+                echo "Tracker is $tracker , local ratio $localratio_raw is less than ${min_ratio_move_local}."
+                if [[ ("${run_count}" -ge "${run_count_max}" || -n "${SKIP_SLEEP+x}") ]];then
+                        echo "run_count=$run_count is above threshold $run_count_max or SKIP_SLEEP bypass detected, force-moving to long term"
+                        seed_longterm
+                        return
+                else
+                        echo "Iteration sequence is $run_count/$run_count_max"
+                        sleep_func_p step_sleep run_count
+                        eval_tracker_ratio
+                fi
+
 	elif [[ ("$dc_remote_enable" -eq 1 && "$localratio" -lt "${min_ratio_move_local}" && "$remoteratio" -lt "${min_ratio_move_remote}") ]];then
 		echo "Tracker is $tracker , local ratio $localratio_raw is less than ${min_ratio_move_local} or remote ratio $remoteratio_raw is less than ${min_ratio_move_remote}."
 		if [[ ("${run_count}" -ge "${run_count_max}" || -n "${SKIP_SLEEP+x}") ]];then
 			echo "run_count=$run_count is above threshold $run_count_max or SKIP_SLEEP bypass detected, force-moving to long term"
 			seed_longterm
 			return
-
-	elif [[ ("$localratio" -lt "${min_ratio_move_local}") ]];then
-		echo "Tracker is $tracker , local ratio $localratio_raw is less than ${min_ratio_move_local}."
-		if [[ ("${run_count}" -ge "${run_count_max}" || -n "${SKIP_SLEEP+x}") ]];then
-			echo "run_count=$run_count is above threshold $run_count_max or SKIP_SLEEP bypass detected, force-moving to long term"
-			seed_longterm
-			return
 		fi
-		else
-			echo "Iteration sequence is $run_count/$run_count_max"
-			sleep_func_p step_sleep run_count
-			eval_tracker_ratio
-		fi
-
-	elif [[ ("${localratio}" -ge "${min_ratio_move_local}" ) ]];then
-		echo "Tracker is $tracker , local ratio $localratio_raw is greater than ${min_ratio_move_local}."
-		echo "Moving torrent to short term seeding."
-		seed_shortterm
-		return
-
 	else
-		echo "Tracker is $tracker , local ratio is $localratio_raw."
+		echo "Tracker is $tracker, local ratio is $localratio_raw."
 		echo "Moving torrent to long term seeding."
 		seed_longterm
 		return
